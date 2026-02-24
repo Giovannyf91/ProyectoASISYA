@@ -1,0 +1,81 @@
+# ==============================
+# .NET Core / C# / Visual Studio
+# ==============================
+
+# Build results
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Auto-generated VS files
+.vs/
+*.vsp
+*.vspx
+*.vsix
+
+# NuGet packages
+*.nupkg
+packages/
+# NuGet v3
+*.snupkg
+
+# Rider IDE
+.idea/
+
+# Logs
+*.log
+
+# ==============================
+# Node / React / Frontend
+# ==============================
+
+# Node modules
+node_modules/
+
+# Build output
+build/
+dist/
+*.local
+*.cache
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================
+# Misc / OS files
+# ==============================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor backups
+*.bak
+*.swp
+*.tmp
+
+# ==============================
+# Optional: Test / Coverage files
+# ==============================
+
+coverage/
+*.lcov
+TestResults/
