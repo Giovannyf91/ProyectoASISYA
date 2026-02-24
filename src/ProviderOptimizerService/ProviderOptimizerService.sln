@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36127.28 d17.14
+VisualStudioVersion = 17.14.36127.28
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -18,6 +18,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProviderOptimizer.Infrastructure", "ProviderOptimizer.Infrastructure\ProviderOptimizer.Infrastructure.csproj", "{D411FDB7-BB3E-41FA-9E08-1E8460144B5B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProviderOptimizer.Application", "ProviderOptimizer.Application\ProviderOptimizer.Application.csproj", "{1210F595-F70E-4398-A826-FFFA5B0E7509}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{F8E7FE59-3607-4DA2-8EB6-CFB9DA9D6B06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProviderOptimizerTests", "ProviderOptimizerTests\ProviderOptimizerTests.csproj", "{970C48C3-87E8-4AFE-A897-32047456B605}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +45,10 @@ Global
 		{1210F595-F70E-4398-A826-FFFA5B0E7509}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1210F595-F70E-4398-A826-FFFA5B0E7509}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1210F595-F70E-4398-A826-FFFA5B0E7509}.Release|Any CPU.Build.0 = Release|Any CPU
+		{970C48C3-87E8-4AFE-A897-32047456B605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{970C48C3-87E8-4AFE-A897-32047456B605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{970C48C3-87E8-4AFE-A897-32047456B605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{970C48C3-87E8-4AFE-A897-32047456B605}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,6 +58,7 @@ Global
 		{D6B81ED9-AE3E-42D6-A37F-9AB06FD1E679} = {692945C7-854A-4986-8F6E-9AFA1DAB5677}
 		{D411FDB7-BB3E-41FA-9E08-1E8460144B5B} = {BECECD26-FFFC-4168-8496-0954D0EB1CE4}
 		{1210F595-F70E-4398-A826-FFFA5B0E7509} = {6A88BEE9-CD73-4121-8EFE-6F807EE74346}
+		{970C48C3-87E8-4AFE-A897-32047456B605} = {F8E7FE59-3607-4DA2-8EB6-CFB9DA9D6B06}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76B7440E-1E92-40AA-A5BF-6D2B9EA54992}

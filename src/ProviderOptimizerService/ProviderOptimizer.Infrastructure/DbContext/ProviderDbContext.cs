@@ -1,6 +1,5 @@
 ﻿using ProviderOptimizer.Domain.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
+using Microsoft.EntityFrameworkCore;
 
 namespace ProviderOptimizer.Infrastructure.DbContext
 {
@@ -11,7 +10,6 @@ namespace ProviderOptimizer.Infrastructure.DbContext
         {
         }
 
-        // Tablas / DbSets
         public DbSet<Provider> Providers { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
 
@@ -19,7 +17,6 @@ namespace ProviderOptimizer.Infrastructure.DbContext
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configuración básica Provider
             modelBuilder.Entity<Provider>(entity =>
             {
                 entity.HasKey(p => p.Id);
@@ -29,12 +26,11 @@ namespace ProviderOptimizer.Infrastructure.DbContext
                 entity.Property(p => p.Available).HasDefaultValue(true);
             });
 
-            // Configuración básica Assignment
             modelBuilder.Entity<Assignment>(entity =>
             {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.AssignedAt).IsRequired();
-                entity.HasOne<Provider>()      // Relación opcional
+                entity.HasOne<Provider>()
                       .WithMany()
                       .HasForeignKey(a => a.ProviderId)
                       .OnDelete(DeleteBehavior.Restrict);

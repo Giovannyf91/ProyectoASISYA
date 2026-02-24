@@ -1,4 +1,7 @@
-﻿namespace ProviderOptimizer.Application
+﻿using ProviderOptimizer.Application.Interfaces;
+using ProviderOptimizer.Domain.Entities;
+
+namespace ProviderOptimizer.Application
 {    
     public class OptimizeProviderUseCase
     {

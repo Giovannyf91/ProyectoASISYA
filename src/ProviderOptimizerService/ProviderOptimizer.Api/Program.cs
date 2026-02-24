@@ -1,9 +1,24 @@
+using Microsoft.EntityFrameworkCore;
+using ProviderOptimizer.Application;
+using ProviderOptimizer.Application.Interfaces;
+using ProviderOptimizer.Infrastructure.DbContext;
+using ProviderOptimizerService.Infrastructure.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Conexión a PostgreSQL
+builder.Services.AddDbContext<ProviderDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+// Repositorios
+builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
+
+// Use Cases
+builder.Services.AddScoped<OptimizeProviderUseCase>();
+builder.Services.AddScoped<GetAvailableProvidersUseCase>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
