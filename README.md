@@ -1,185 +1,126 @@
-# Arquitectura – Sistema de Asistencias Vehiculares (ASISYA)
+# Entregables ASISYA – Squad Técnico
 
-## 1. Introducción
+## 4.3. Estándares técnicos del squad
 
-Este documento describe la **arquitectura de microservicios** para el módulo **“Asignación Inteligente de Proveedores”**, parte del sistema de asistencias vehiculares ASISYA.  
+### Convenciones de código
 
-Incluye:
+**.NET**
+- Clases y métodos en PascalCase, variables locales en camelCase.  
+- Aplicar Clean Architecture y principios SOLID en todos los microservicios.  
+- Usar `async/await` siempre que haya operaciones de I/O.  
+- Validaciones y DTOs para todos los endpoints públicos.  
 
-- Diagramas C4 Nivel 1–3  
-- Bounded contexts  
-- Entidades (DDD)  
-- Eventos de dominio  
-- Contratos (APIs REST y mensajes de eventos)  
-- Consideraciones de escalabilidad y seguridad (resumen)
+**React**
+- Componentes funcionales y hooks.  
+- JSX con indentación de 2 espacios.  
+- Manejo de estado mínimo con Context o Redux según la complejidad.  
 
----
-## 2. Diagramas C4
-
-### Nivel 1 – System Context
-
-- Clientes: App móvil y App proveedor  
-- Plataforma ASISYA: recibe solicitudes, valida ubicación, asigna proveedores, notifica y registra casos  
-- Integración con servicios externos: Identity Provider (JWT/OAuth2), Servicio de Mapas, Servicio Push  
-
-**Archivo:** `document\Arquitecture\C4 diagramas.drawio`
+**Docker**
+- Construcciones optimizadas con `multi-stage builds`.  
+- Nunca incluir secretos en las imágenes.  
+- Contenedores ligeros y reproducibles.  
 
 ---
 
-### Nivel 2 – Container
+### Políticas del squad
 
-- Frontend: React (cliente y proveedor)  
-- ALB → API Gateway → Microservicios (.NET 8, Docker, ECS)  
-- Microservicios: AssistanceRequestService, ProviderOptimizerService, LocationService, NotificationsService  
-- Persistencia: RDS PostgreSQL, Redis Cache  
-- Comunicación: Message Broker (SQS/EventBridge)  
-- Observabilidad: CloudWatch, logging, metrics  
-
-**Archivo:** `document\Arquitecture\C4 diagramas.drawio`
-
----
-
-### Nivel 3 – Componentes (AssistanceRequestService)
-- Integración externa: LocationService, Message Broker, RDS PostgreSQL  
-
-**Archivo:** `document\Arquitecture\C4 diagramas.drawio`
+- **Branch strategy:** `main` protegido, `feature/*` para nuevas funcionalidades, `hotfix/*` para correcciones urgentes.  
+- **Code reviews:** obligatorio al menos 1 reviewer; incluir checklist de seguridad y estilo.  
+- **CI/CD:** pipeline automatizado en GitHub Actions: build, tests, lint, docker build.  
+- **Definition of Done:** código funcional, tests con cobertura > 80%, documentación actualizada.  
+- **Secret management:** usar AWS Secrets Manager o `.env` no versionado.  
+- **Arquitectura base:** microservicios desacoplados, event-driven, clean architecture.  
+- **Control de deuda técnica:** issues etiquetados y revisiones periódicas para mantener calidad.  
 
 ---
 
-## 3. Bounded Contexts
+## 4.4. Revisión de código – AssignProvider
 
-| Contexto                  | Descripción                                                                 |
-|----------------------------|---------------------------------------------------------------------------|
-| **AssistanceRequest**      | Gestión de solicitudes de asistencia: creación, validación y seguimiento. |
-| **ProviderOptimization**   | Algoritmo que selecciona el proveedor óptimo según ETA, disponibilidad y rating. |
-| **Notifications**          | Envío de notificaciones a proveedores y clientes.                         |
-| **Location**               | Validación y servicios de ubicación geográfica.                           |
+### Código original defectuoso
 
----
-
-## 4. Entidades (DDD)
-
-### AssistanceRequest Context
-
-| Entidad             | Descripción                                         | Atributos clave                                 |
-|--------------------|---------------------------------------------------|------------------------------------------------|
-| **AssistanceRequest** | Solicitud de asistencia vehicular                 | Id, ClienteId, TipoAsistencia, Ubicación, Estado, FechaHoraSolicitud |
-| **Cliente**          | Datos del cliente solicitante                      | Id, Nombre, Teléfono, Email                     |
-| **AsistenciaEstado** | Enum: Pendiente, EnProceso, Finalizada, Cancelada | —                                              |
-
-### ProviderOptimization Context
-
-| Entidad       | Descripción                               | Atributos clave                               |
-|---------------|------------------------------------------|-----------------------------------------------|
-| **Proveedor** | Proveedor disponible                       | Id, Nombre, TipoServicio, UbicaciónActual, Rating, EstadoDisponibilidad |
-| **Asignación** | Resultado de la selección de proveedor   | Id, AssistanceRequestId, ProveedorId, ETA, FechaHoraAsignación |
-
-### Notifications Context
-
-| Entidad       | Descripción                               | Atributos clave                               |
-|---------------|------------------------------------------|-----------------------------------------------|
-| **Notificación** | Registro de notificaciones enviadas     | Id, DestinatarioId, TipoNotificación, Estado, FechaHoraEnvio |
-
-### Location Context
-
-| Entidad       | Descripción                               | Atributos clave                               |
-|---------------|------------------------------------------|-----------------------------------------------|
-| **Ubicación** | Coordenadas geográficas                   | Latitud, Longitud, Dirección, RadioDeCobertura |
-
----
-
-## 5. Eventos de Dominio
-
-| Evento                   | Descripción                                | Publicador                   | Consumidor                 |
-|---------------------------|-------------------------------------------|------------------------------|----------------------------|
-| **AssistanceRequested**   | Cliente crea una solicitud                 | AssistanceRequestService     | ProviderOptimizerService    |
-| **ProviderAssigned**      | Proveedor asignado a solicitud            | ProviderOptimizerService     | NotificationsService        |
-| **NotificationSent**      | Notificación enviada                       | NotificationsService         | Auditoría / opcional       |
-| **LocationValidated**     | Ubicación del cliente validada            | LocationService              | AssistanceRequestService   |
-
-**Ejemplo de evento JSON: AssistanceRequested**
-
-```json
+```csharp
+[HttpPost("assign")]
+public async Task<IActionResult> AssignProvider(Request request)
 {
-  "requestId": "uuid-1234",
-  "clientId": "uuid-5678",
-  "type": "Grua",
-  "location": {
-    "lat": -34.6037,
-    "lng": -58.3816
-  },
-  "timestamp": "2026-02-24T15:00:00Z"
+    var providers = await _db.Providers.ToListAsync();
+
+    var selected = providers.FirstOrDefault(); // escoger el primero nomás
+    if(selected == null) return BadRequest("No providers");
+
+    selected.IsBusy = true;
+    _db.SaveChanges();
+
+    return Ok(selected);
 }
-
 ```
-## 6. Contratos / APIs REST
 
-| Servicio                  | Endpoint                         | Método | Descripción                                |
-|---------------------------|---------------------------------|--------|--------------------------------------------|
-| AssistanceRequestService  | `/assistance-requests`           | POST   | Crear nueva solicitud                       |
-| AssistanceRequestService  | `/assistance-requests/{id}`      | GET    | Obtener estado y seguimiento               |
-| ProviderOptimizerService  | `/providers/optimal`             | POST   | Obtener proveedor óptimo para la solicitud |
-| NotificationsService      | `/notifications/send`            | POST   | Enviar notificación                        |
+### Problemas detectados
 
----
+1. **Selección de proveedor poco realista**  
+   Siempre se elige el primer proveedor sin evaluar disponibilidad, ubicación, ETA o rating.  
 
-## 7. Notas de Arquitectura
+2. **Falta de validaciones**  
+   No se comprueba que `request` sea válido ni que `ServiceType` esté presente.  
 
-- Microservicios desacoplados, **event-driven** mediante **Message Broker (SQS / EventBridge)**  
-- Base de datos **RDS PostgreSQL por servicio**  
-- **Cache Redis** para optimización de geolocalización y ETA  
-- **API Gateway** con JWT, rate limiting y logging centralizado  
-- Escalabilidad: Auto Scaling en ECS, procesamiento asíncrono, retries y fallback  
-- Seguridad: IAM Roles, JWT, WAF, Secrets Manager, auditoría, OWASP  
-- Observabilidad: CloudWatch, logs, métricas y tracing distribuido
+3. **Riesgo de concurrencia**  
+   Solicitudes simultáneas podrían asignar el mismo proveedor a varios clientes.  
 
----
+4. **Sin transacciones**  
+   `_db.SaveChanges()` se ejecuta directamente, dejando el sistema vulnerable a inconsistencias si falla algo en medio.  
 
-## 8. Estrategia de Escalabilidad
+5. **Mezcla de responsabilidades**  
+   El Controller realiza tanto la selección del proveedor como la persistencia, violando SOLID.  
 
-- **Microservicios:** contenedores Docker orquestados en ECS/Kubernetes para escalabilidad horizontal  
-- **Auto Scaling:** ajuste dinámico según métricas de CPU, memoria o latencia  
-- **Colas y Pub/Sub:** uso de SQS / EventBridge para desacoplar productores y consumidores  
-- **Procesamiento asíncrono:** tareas en background para notificaciones y cálculo de proveedores óptimos  
-- **Cache Redis:** para resultados frecuentes (geolocalización, ETA) y reducción de consultas a base de datos  
-- **Rate limits / throttling:** API Gateway para limitar requests y proteger endpoints  
-- **Fallback y retries:** patrón retry con backoff exponencial y fallback ante errores de servicios externos  
+6. **Exposición directa de entidades**  
+   Retorna la entidad `Provider` completa, lo que puede filtrar información sensible.  
+
+7. **Uso incorrecto de async**  
+   `_db.SaveChanges()` es síncrono dentro de un método `async`, reduciendo escalabilidad.  
+
+8. **Lógica incompleta**  
+   No aplica criterios de optimización para elegir al proveedor más adecuado.  
 
 ---
 
-## 9. Estrategia de Seguridad
+### Código sugerido
 
-- **Autenticación:** JWT + OAuth2 para clientes y proveedores  
-- **Autorización:** roles y claims en JWT, gestión de permisos mediante IAM Roles  
-- **API Gateway:** control de acceso, rate limiting y logging centralizado  
-- **Firewall / WAF:** protección contra ataques OWASP comunes y DDoS básico  
-- **Gestión de secretos:** AWS Secrets Manager para credenciales y claves sensibles  
-- **Auditoría y trazabilidad:** logging centralizado en CloudWatch y tracing distribuido con X-Ray  
-- **Buenas prácticas OWASP:** sanitización de inputs, validación de datos y protección de endpoints  
+```csharp
+[HttpPost("assign")]
+public async Task<IActionResult> AssignProviderAsync([FromBody] AssignProviderRequest request)
+{
+    if(request == null || string.IsNullOrWhiteSpace(request.ServiceType))
+        return BadRequest("ServiceType es obligatorio");
 
----
+    var provider = await _providerUseCase.GetOptimalProviderAsync(request.ServiceType);
+    if(provider == null) return NotFound("No hay proveedores disponibles");
+    
+    using var transaction = await _db.Database.BeginTransactionAsync();
+    provider.IsBusy = true;
+    _db.Providers.Update(provider);
+    await _db.SaveChangesAsync();
+    await transaction.CommitAsync();
+  
+    var result = new ProviderDto { Id = provider.Id, Name = provider.Name };
+    return Ok(result);
+}
+```
 
-## 10. Checklist de Revisión Técnica (Code Review)
+### Mejoras aplicadas
 
-### Buenas prácticas
-- Entidades y servicios separados (DDD + Clean Architecture) ✅  
-- Controllers sin lógica de negocio (solo exponen endpoints) ✅  
-- Logging de eventos y errores implementado ✅  
+- ✅ **Async/await correctamente implementado**  
+  El método ahora es completamente asíncrono, incluyendo `SaveChangesAsync`, evitando bloqueos innecesarios.  
 
-### Calidad
-- Manejo de excepciones parcial ❌ → agregar `try/catch` y retornos HTTP adecuados  
-- Validaciones de input incompletas ❌ → asegurar que `TipoAsistencia` y `Ubicacion` no sean nulos  
+- ✅ **Transacción y control de concurrencia**  
+  Uso de `BeginTransactionAsync()` para asegurar consistencia si falla alguna operación durante la asignación del proveedor.  
 
-### Escalabilidad
-- Publicación de eventos simulada → reemplazar por SQS / EventBridge real  
-- Uso de lista en memoria → reemplazar por RDS/PostgreSQL para persistencia  
+- ✅ **Validaciones de entrada**  
+  Se verifica que el `request` no sea nulo y que `ServiceType` sea obligatorio antes de procesar la solicitud.  
 
-### Seguridad
-- Falta JWT en endpoints → agregar `[Authorize]`  
-- No hay sanitización de datos → validar inputs para proteger de inyección  
+- ✅ **Uso de DTO para salida segura**  
+  El controller ya no retorna la entidad `Provider` directamente; se expone un `ProviderDto` con los datos mínimos necesarios.  
 
-### Testing
-- Crear Unit Tests para `AssistanceRequestService`  
-- Mock del Message Broker para pruebas de integración  
+- ✅ **Separación de responsabilidades (SOLID)**  
+  La lógica de selección de proveedor se delega al UseCase (`_providerUseCase`), manteniendo el Controller limpio.  
 
----
+- ✅ **Política de selección extensible**  
+  Ahora se puede implementar selección óptima considerando disponibilidad, rating, ubicación, y otros criterios, en lugar de tomar siempre el primero.  
